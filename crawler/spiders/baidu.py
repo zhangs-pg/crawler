@@ -36,21 +36,30 @@ class BaiduSpider(scrapy.Spider):
         self.start_urls.append(url)
         
     def parse(self, response):
-        data = json.loads(response.text)
-        if not data:
-            return
-        objects =data["data"]
-        if len(objects[0]) == 0:
-            return
-        for obj in objects:
-            item = CrawlerImageUrlItem()
-            try:
-                item['ImageUrl'] = [obj["thumbURL"]]
-            except Exception as e:
-                print(e)
-            yield item
-        
-        self.pn += 30
-        url = self.base_url.format(self.key, self.key, self.pn)
-        yield scrapy.Request(url, callback=self.parse, headers=
-            self.settings.get("DEFAULT_REQUEST_HEADERS"), dont_filter=True)
+        try:
+            data = json.loads(response.text)
+        except Exception as e:
+            print(e)
+            self.pn += 30
+            url = self.base_url.format(self.key, self.key, self.pn)
+            yield scrapy.Request(url, callback=self.parse, headers=
+                self.settings.get("DEFAULT_REQUEST_HEADERS"), dont_filter=True)
+        else:
+            if not data:
+                return
+            objects =data["data"]
+            if len(objects[0]) == 0:
+                return
+            for obj in objects:
+                item = CrawlerImageUrlItem()
+                try:
+                    item['ImageUrl'] = [obj["thumbURL"]]
+                except Exception as e:
+                    print(e)
+                else:
+                    yield item
+            
+            self.pn += 30
+            url = self.base_url.format(self.key, self.key, self.pn)
+            yield scrapy.Request(url, callback=self.parse, headers=
+                self.settings.get("DEFAULT_REQUEST_HEADERS"), dont_filter=True)
